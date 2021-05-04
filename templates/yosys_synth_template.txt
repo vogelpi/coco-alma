@@ -1,6 +1,7 @@
 {READ_FILES}
 
-synth -flatten -noabc -top {TOP_MODULE};
+hierarchy -check -top {TOP_MODULE};
+proc; flatten; opt; memory; opt; techmap; opt -purge; clean;
 write_verilog -noattr {NETLIST_FILE_PATH};
 design -reset; design -reset-vlog;
 
