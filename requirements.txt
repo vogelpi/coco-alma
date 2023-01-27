@@ -1,7 +1,11 @@
 networkx==2.4
 python-sat==0.1.7.dev10
+numpy==1.21.6
 wheel
 pytest
 pytest-timeout
 pytest-html
 matplotlib
+pyyaml
+mako
+hjson
