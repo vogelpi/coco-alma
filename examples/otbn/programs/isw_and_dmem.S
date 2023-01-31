@@ -13,6 +13,28 @@
 #
 .section .text.start
 
+# Set registers - Load secrets from DMEM
+# x2 = 6
+li x2, 6
+# *x2 == w6 = dmem[0] # share 0
+bn.lid x2, 0(x0)
+# x2 = 7
+li x2, 7
+# *x2 == w7 = dmem[1] # share 0
+bn.lid x2, 32(x0)
+# x2 = 8
+li x2, 8
+# *x2 == w8 = dmem[2] # share 1
+bn.lid x2, 64(x0)
+# x2 = 9
+li x2, 9
+# *x2 == w9 = dmem[3] # share 1
+bn.lid x2, 96(x0)
+# x2 = 10
+li x2, 10
+# *x2 == w10 = dmem[4] # mask
+bn.lid x2, 128(x0)
+
 # Compute inner-domain terms.
 bn.and w1, w6, w8
 bn.and w0, w0, w0 # dummy
