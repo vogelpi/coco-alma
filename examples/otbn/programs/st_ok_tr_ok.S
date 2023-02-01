@@ -1,4 +1,5 @@
 # We don't expect any leakage at all in stable or transient modes
+# Ignore u_dmem
 
 .section .text.start
 

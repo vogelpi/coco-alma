@@ -2,16 +2,31 @@
 # - secret X in w6 and w7 (A and B share) - 0011 = 1010 ^ 1001
 # - secret Y in w8 and w9 (A and B share) - 0101 = 1110 ^ 1011
 # - fresh mask in w10 - 0110
-# - expected result w11 & w12 == 0011 & 0101 = 0001 
+# - expected result w11 ^ w12 == 0110 ^ 0111 = 0001 == 0011 & 0101
 #
 # We end up with
 # - Secret Q in x11 and x12 (A and B share)
 #
 # Where Q = X & Y
 #
-# Ignore u_dmem
-#
 .section .text.start
+
+# # Set initial values
+# # Uncomment here when checking the result
+# bn.xor w0, w0, w0
+# bn.xor w6, w6, w6
+# bn.addi w6, w6, 10
+# bn.xor w7, w7, w7
+# bn.addi w7, w7, 9
+# bn.xor w8, w8, w8
+# bn.addi w8, w8, 14
+# bn.xor w9, w9, w9
+# bn.addi w9, w9, 11
+# bn.xor w10, w10, w10
+# bn.addi w10, w10, 6
+
+# # Uncomment this line to see a stable leak
+# bn.xor w11, w6, w7
 
 # Compute inner-domain terms.
 bn.and w1, w6, w8

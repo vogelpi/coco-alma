@@ -2,18 +2,30 @@
 # - secret X in w6 and w7 (A and B share) - 0011 = 1010 ^ 1001
 # - secret Y in w8 and w9 (A and B share) - 0101 = 1110 ^ 1011
 # - fresh mask in w10 - 0110
-# - expected result w11 & w12 == 0011 & 0101 = 0001 
+# - expected result w11 ^ w12 == 0110 ^ 0111 = 0001 == 0011 & 0101 
 #
 # We end up with
 # - Secret Q in x11 and x12 (A and B share)
 #
 # Where Q = X & Y
 #
-# Ignore u_dmem
-#
 .section .text.start
 
-# Set registers - Load secrets from DMEM
+# # Set initial values to the dmem
+# # Uncomment here when checking the result
+# bn.xor w0, w0, w0
+# li x2, 10
+# sw x2, 0(x0)
+# li x2, 9
+# sw x2, 32(x0)
+# li x2, 14
+# sw x2, 64(x0)
+# li x2, 11
+# sw x2, 96(x0)
+# li x2, 6
+# sw x2, 128(x0)
+
+# Load secrets from DMEM to register file
 # x2 = 6
 li x2, 6
 # *x2 == w6 = dmem[0] # share 0
@@ -34,6 +46,9 @@ bn.lid x2, 96(x0)
 li x2, 10
 # *x2 == w10 = dmem[4] # mask
 bn.lid x2, 128(x0)
+
+# # Uncomment this line to see a stable leak
+# bn.xor w11, w6, w7
 
 # Compute inner-domain terms.
 bn.and w1, w6, w8
