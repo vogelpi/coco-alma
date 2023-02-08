@@ -1,0 +1,2 @@
+w0: secret 0
+w1: secret 0
