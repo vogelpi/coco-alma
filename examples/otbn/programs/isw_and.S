@@ -28,33 +28,25 @@
 # Compute inner-domain terms.
 bn.and w1, w6, w8
 bn.and w0, w0, w0 # dummy
-bn.and w0, w0, w0 # dummy
 bn.and w2, w7, w9
-bn.and w0, w0, w0 # dummy
 bn.and w0, w0, w0 # dummy
 
 # Compute cross-domain terms.
 bn.and w3, w6, w9
 bn.and w0, w0, w0 # dummy
-bn.and w0, w0, w0 # dummy
 bn.and w4, w7, w8
-bn.and w0, w0, w0 # dummy
 bn.and w0, w0, w0 # dummy
 
 # Resharing of cross-domain terms.
 bn.xor w14, w4, w10
 bn.and w0, w0, w0 # dummy
-bn.and w0, w0, w0 # dummy
 bn.xor w13, w3, w10
-bn.and w0, w0, w0 # dummy
 bn.and w0, w0, w0 # dummy
 
 # Integration
 bn.xor w11, w1, w13
 bn.and w0, w0, w0 # dummy
-bn.and w0, w0, w0 # dummy
 bn.xor w12, w2, w14
-bn.and w0, w0, w0 # dummy
 bn.and w0, w0, w0 # dummy
 
 # # Compute result and compare it with the expected result
