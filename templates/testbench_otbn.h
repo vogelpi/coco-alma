@@ -49,6 +49,12 @@ template<class Module> struct Testbench
     
     virtual void reset(void) 
     {
+        for(int i = 0; i < 8; i = i + 2) {
+            m_core->edn_rnd_data_i[i] = 0x99999999;
+            m_core->edn_urnd_data_i[i] = 0x99999999;
+            m_core->edn_rnd_data_i[i+1] = 0xAAAAAAAA;
+            m_core->edn_urnd_data_i[i+1] = 0xAAAAAAAA;
+        }
         m_core->rst_sys_n = 0;
         this->tick();
         this->tick();
