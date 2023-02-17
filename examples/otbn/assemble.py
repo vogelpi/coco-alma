@@ -11,6 +11,7 @@ ASM_CMD = None
 OBJDUMP_CMD = None
 RV_OBJDUMP_CMD = None
 INSTR_LIMIT = None
+DATA_LIMIT = None
 VERILATOR_AT_LEAST_4_200 = False
 
 
@@ -52,6 +53,7 @@ check_file_exists(RV_OBJDUMP_CMD[0])
 
 def parse_arguments():
     global INSTR_LIMIT
+    global DATA_LIMIT
     parser = argparse.ArgumentParser(description="Assemble.py for otbn")
     parser.add_argument("--program", dest="program_path", required=True)
     # parser.add_argument('--init-file', dest='init_file_path', required=False, default=None)
@@ -68,6 +70,12 @@ def parse_arguments():
         rax = re.compile("u_imem.mem\[([0-9]+)\]")
         INSTR_LIMIT = max([int(x) for x in rax.findall(verilog_txt)]) + 1
         print("INSTR_LIMIT = ", INSTR_LIMIT)
+
+    with open(args.netlist_path, "r") as f:
+        verilog_txt = f.read()
+        rax = re.compile("u_dmem.mem\[([0-9]+)\]")
+        DATA_LIMIT = max([int(x) for x in rax.findall(verilog_txt)]) + 1
+        print("DATA_LIMIT = ", DATA_LIMIT)
 
     return args
 
@@ -91,6 +99,16 @@ def secded_extend_39_32(num):
     num = num | ((xor_all_bits(num & 0x2dcc624c) ^ 1) << 37)
     num = num | ((xor_all_bits(num & 0x98505586) ^ 0) << 38)
     return num
+
+
+# extend 256-bit data to a 312-bit value
+def secded_extend_312_256(x):
+    y = 0
+    for i in range(0, 8):
+        data_32 = (x & ((2**32)-1))
+        y = y | (secded_extend_39_32(data_32) << (i*39))
+        x = x >> 32
+    return y
 
 
 def create_raminit_header(args):
@@ -120,12 +138,12 @@ def create_raminit_header(args):
     while("section" not in data[curr - 1]): curr += 1
     data = [d.strip()[:d.find("  ")].split()[1:] for d in data[curr:]]
     data = "".join(["".join(d) for d in data])
-    code = ba.unhexlify(data)
+    text_code = ba.unhexlify(data)
 
     # check .text section size
-    MEM_WIDTH = 4
-    if len(code) > INSTR_LIMIT * MEM_WIDTH:
-        print(".text section is too large (> %d bytes)" % (INSTR_LIMIT * MEM_WIDTH))
+    INSTR_MEM_WIDTH = 4
+    if len(text_code) > INSTR_LIMIT * INSTR_MEM_WIDTH:
+        print(".text section is too large (> %d bytes)" % (INSTR_LIMIT * INSTR_MEM_WIDTH))
         sys.exit(-1)
 
     # create ram_init.h file
@@ -133,42 +151,50 @@ def create_raminit_header(args):
     header.write("void load_prog(Testbench<Vcircuit>* tb) {\n")
 
     # append secded extended instructions to the ram_init.h file
-    for i in range(0, len(code), MEM_WIDTH):
-        x = "0x" + ba.hexlify(code[i:i+MEM_WIDTH][::-1]).decode("ascii")
+    for i in range(0, len(text_code), INSTR_MEM_WIDTH):
+        x = "0x" + ba.hexlify(text_code[i:i+INSTR_MEM_WIDTH][::-1]).decode("ascii")
         x = hex(secded_extend_39_32(int(x, 0)))
-        signal_name = "02Emem__05B%d__05D" % (i // MEM_WIDTH)
+        signal_name = "02Emem__05B%d__05D" % (i // INSTR_MEM_WIDTH)
         if VERILATOR_AT_LEAST_4_200:
             signal_name = signal_name.lower()
         signal_name = "otbn_top_coco__DOT__u_imem__" + signal_name
         header.write("  tb->m_core->%s = %s;\n" % (signal_name, x))
 
-    # # parse data init file with format addr/reg ; value
-    # reg, mem = [], []
-    # if args.init_file_path is not None:
-    #     data = None
-    #     with open(args.init_file_path, "r") as f:
-    #         data = f.read().strip().split("\n")
-    #     data = [d.split(";") for d in data]
-    #     reg = [d for d in data if d[0].startswith("x")]
-    #     mem = [d for d in data if not d[0].startswith("x")]
+    # retrieve .data section from program.elf
+    cmd = RV_OBJDUMP_CMD + ["-s", "-j", ".data", TMP_DIR + "/otbn_program.elf"]
+    p = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
+    p.wait()
+    data = p.stdout.read().decode("ascii").strip().split("\n")
 
-    # for m in mem:
-    #     addr, val = int(m[0], 0) // MEM_WIDTH, m[1]
-    #     signal_name = "02Emem__05B%d__05D" % addr
-    #     if VERILATOR_AT_LEAST_4_200:
-    #         signal_name = signal_name.lower()
-    #     signal_name = "ibex_top__DOT__u_ram__" + signal_name
-    #     header.write("  tb->m_core->%s = %s;\n" % (signal_name, val))
+    # strip instructions from .data section
+    if len(data) > 1:
+        curr = 1
+        while("section" not in data[curr - 1]): curr += 1
+        data = [d.strip()[:d.find("  ")].split()[1:] for d in data[curr:]]
+        data = "".join(["".join(d) for d in data])
+        data_code = ba.unhexlify(data)
+
+        # check .data section size
+        DATA_MEM_WIDTH = 32
+        if len(data_code) > DATA_LIMIT * DATA_MEM_WIDTH:
+            print(".data section is too large (> %d bytes)" % (DATA_LIMIT * DATA_MEM_WIDTH))
+            sys.exit(-1)
+
+        # append secded extended instructions to the ram_init.h file
+        for i in range(0, len(data_code), DATA_MEM_WIDTH):
+            x = "0x" + ba.hexlify(data_code[i:i+DATA_MEM_WIDTH][::-1]).decode("ascii")
+            x = secded_extend_312_256(int(x, 0))
+            for j in range(0, 10):
+                signal_name = "02Emem__05B%d__05D" % (i // DATA_MEM_WIDTH)
+                signal_name = signal_name + "[%d]" % j
+                if VERILATOR_AT_LEAST_4_200:
+                    signal_name = signal_name.lower()
+                signal_name = "otbn_top_coco__DOT__u_dmem__" + signal_name
+                data_32 = (x & ((2**32)-1))
+                header.write("  tb->m_core->%s = %s;\n" % (signal_name, hex(data_32)))
+                x = x >> 32
 
     header.write("  tb->reset();\n")
-
-    # for r in reg:
-    #     addr, val = r[0][1:], r[1]
-    #     signal_name = "02Eregister_file_i__02Erf_reg_tmp__05B%d__05D" % addr
-    #     if VERILATOR_AT_LEAST_4_200:
-    #         signal_name = signal_name.lower()
-    #     signal_name = "ibex_top__DOT__u_core__" + signal_name
-    #     header.write("  tb->m_core->%s = %s;\n" % (signal_name, val))
 
     header.write("}\n")
     header.close()
