@@ -1,3 +1,4 @@
+# Read and use RND input for fresh masking
 # w0 and w1 have shares
 
 .section .text.start

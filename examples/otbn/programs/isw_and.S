@@ -1,18 +1,15 @@
 # We start with
-# - secret X in w6 and w7 (A and B share) - 0011 = 1010 ^ 1001
-# - secret Y in w8 and w9 (A and B share) - 0101 = 1110 ^ 1011
-# - fresh mask in w10 - 0110
-# - expected result w11 ^ w12 == 0110 ^ 0111 = 0001 == 0011 & 0101
-#
+# - secret X = w6 ^ w7 (A and B share) - 0011 = 1010 ^ 1001
+# - secret Y = w8 ^ w9 (A and B share) - 0101 = 1110 ^ 1011
+# - fresh mask Z in w10 - 0110
+# - expected result Q = X * Y = w11 ^ w12
 # We end up with
-# - Secret Q in x11 and x12 (A and B share)
-#
-# Where Q = X & Y
-#
+# - secret Q = w11 ^ w12 (A and B share) = 0110 ^ 0111 = 0001 == 0011 & 0101
+
 .section .text.start
 
 # # Set initial values
-# # Uncomment here when checking the result
+# # Uncomment here when checking the result with the otbn_sim
 # bn.xor w0, w0, w0
 # bn.xor w6, w6, w6
 # bn.addi w6, w6, 10
