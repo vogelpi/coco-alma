@@ -743,6 +743,17 @@ class SatChecker(object):
             trans = self.formula.node_vars_trans[cycle] if self.mode == TRANSIENT else None
 
             for node_id in self.circuit.nodes:
+                cell = self.circuit.cells[node_id]
+                if "dff u_otbn_core.u_otbn_rf_bignum.gen_rf_bignum_ff.u_otbn_rf_bignum_inner.rf" in str(cell):
+                    try:
+                        for mode, mstr in zip((stable, trans), ("stable", "trans ")):
+                            res = self.formula.model_for_vars(model, mode[node_id])
+                            line = " ; ".join(["%s" % n for n, v in zip(self.pretty_names, res) if v == 1])
+                            dbg.write("DEBUG: %4d %s %20s: %s\n" % (cycle, mstr, cell, line))
+                    except:
+                        pass
+
+            for node_id in self.circuit.nodes:
                 if cone is not None and node_id not in cone[cycle]: continue
                 cell = self.circuit.cells[node_id]
                 for mode, mstr in zip((stable, trans), ("stable", "trans ")):

@@ -1,5 +1,5 @@
 dev
 __pycache__
 .idea
-tmp/*
+tmp*/*
 !tmp/.keep
