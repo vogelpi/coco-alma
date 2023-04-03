@@ -1,0 +1,4 @@
+w0: secret 0
+w1: secret 0
+w2: static_random
+w3: volatile_random

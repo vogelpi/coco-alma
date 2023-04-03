@@ -67,4 +67,26 @@
 # bn.xor w9, w9, w9 # dummy
 # bn.xor w4, w1, w0
 
+# # stable leakage: (s0 ^ m) & (s1 & m)
+# bn.xor w0, w2, w0
+# bn.xor w1, w2, w1
+# bn.and w4, w1, w0
+
+# # transient leakage
+# bn.sel  w4, w1, w0, FG0.C
+
+# # no leakage; clear ACC before using a different flagset
+# bn.xor        w9, w9, w9 # create a zero register
+# bn.mulqacc.wo w6, w4.0, w0.0, 0, FG0
+# bn.wsrw       0x3 /* ACC */, w9 # clear ACC
+# bn.wsrw       0x3 /* ACC */, w9 # dummy instruction
+# bn.mulqacc.wo w7, w5.0, w1.0, 0, FG1
+
+# # no leakage; clear ACC and flags before using the same flagset
+# bn.xor        w9, w9, w9 # create a zero register
+# bn.mulqacc.wo w6, w4.0, w0.0, 0, FG0
+# bn.wsrw       0x3 /* ACC */, w9 # clear ACC
+# bn.mulqacc.wo w9, w9.0, w9.0, 0, FG0 # clear flags and also works as a dummy instruction
+# bn.mulqacc.wo w7, w5.0, w1.0, 0, FG0
+
 ecall
