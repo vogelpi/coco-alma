@@ -106,10 +106,16 @@ def yosys_synth(args):
 
         # Provide additional opt arguments for Yosys >= 0.9+3470
         version = subprocess.check_output([yosys_bin_path, "-V"], stderr=subprocess.PIPE)
-        version = re.search(r"Yosys ([0-9]\.[0-9])\+([0-9]+)", str(version))
-        major = version.group(1)
-        minor = version.group(2)
-        if major > "0.9" or (major == "0.9" and minor >= "3470"):
+        version = re.search(r"Yosys ([0-9])\.([0-9]+)(\+)?([0-9]+)?", str(version))
+        major = int(version.group(1))
+        minor = int(version.group(2))
+        patch = version.group(4)
+        # if patch is None, then assume it is 0
+        # hence, version=0.9 is assumed to be "old"
+        patch = 0 if patch == None else int(patch)
+
+        # Provide additional opt arguments for Yosys >= 0.9+3470
+        if major > 0 or minor > 9 or (minor == 9 and patch >= 3470):
             yosys_script_patched = ""
             with open(yosys_synth_file_path) as yosys_script:
                 yosys_script_patched += yosys_script.read()
