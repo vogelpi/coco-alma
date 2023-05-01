@@ -124,7 +124,7 @@ boolean_to_arithmetic:
   # Use RND instead of URND for this analysis
   bn.wsrr   w1, 1
   bn.wsrr   w2, 1
-  bn.rshi   w2, w31, w2 >> 191
+  bn.rshi   w2, w31, w2 >> 192
 
   /* [w4, w3] <= [w21, w20] ^ [w2, w1] = s0 ^ gamma */
   bn.xor    w3, w20, w1
@@ -139,8 +139,8 @@ boolean_to_arithmetic:
 
   /* Truncate subtraction result to 321 bits.
        [w4, w3] <= [w4, w3] mod 2^321 = T */
-  bn.rshi   w4, w4, w31 >> 65
-  bn.rshi   w4, w31, w4 >> 191
+  bn.rshi   w4, w4, w31 >> 64
+  bn.rshi   w4, w31, w4 >> 192
 
   /* [w4, w3] <= [w4, w3] ^ [w21, w20] = T2 */
   bn.xor    w3, w3, w20
@@ -160,8 +160,8 @@ boolean_to_arithmetic:
   bn.sub    w31, w31, w31 # dummy instruction to clear flags
 
   /* [w21, w20] <= [w21, w20] mod 2^321 = A */
-  bn.rshi   w21, w21, w31 >> 65
-  bn.rshi   w21, w31, w21 >> 191
+  bn.rshi   w21, w21, w31 >> 64
+  bn.rshi   w21, w31, w21 >> 192
 
   /* apply fresh mask to w20 and w21 before xoring with w3 and w4 */
   bn.wsrr   w28, 1
