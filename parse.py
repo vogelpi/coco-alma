@@ -115,7 +115,7 @@ def yosys_synth(args):
         patch = 0 if patch == None else int(patch)
 
         # Provide additional opt arguments for Yosys >= 0.9+3470
-        if major > 0 or minor > 9 or (minor == 9 and patch >= 3470):
+        if (major > 0 or minor > 9 or (minor == 9 and patch >= 3470)) and not (args.synthesis_file_path):
             yosys_script_patched = ""
             with open(yosys_synth_file_path) as yosys_script:
                 yosys_script_patched += yosys_script.read()
